@@ -89,6 +89,9 @@ def resolutions():
 
     try:
 
+        print("FORM =", request.form)
+        print("JSON =", request.get_json(silent=True))
+
         url = request.form.get("url")
 
         yt = YouTube(url)
