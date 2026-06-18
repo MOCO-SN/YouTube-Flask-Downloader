@@ -91,42 +91,29 @@ def resolutions():
 
         url = request.form.get("url")
 
-        if not url:
-            return jsonify({
-                "success": False,
-                "error": "URL Required"
-            })
-
         yt = YouTube(url)
 
-        resolutions = set()
+        resolutions = []
 
         for stream in yt.streams.filter(
-                progressive=True,
                 file_extension="mp4"):
 
             if stream.resolution:
-                resolutions.add(stream.resolution)
+                resolutions.append(
+                    stream.resolution
+                )
 
-        for stream in yt.streams.filter(
-                only_video=True,
-                file_extension="mp4"):
-
-            if stream.resolution:
-                resolutions.add(stream.resolution)
-
-        resolution_list = sorted(
-            list(resolutions),
-            key=lambda x: int(x.replace("p", "")),
+        resolutions = sorted(
+            list(set(resolutions)),
+            key=lambda x: int(x[:-1]),
             reverse=True
         )
 
-        if "highest" not in resolution_list:
-            resolution_list.insert(0, "highest")
+        resolutions.insert(0, "highest")
 
         return jsonify({
             "success": True,
-            "resolutions": resolution_list
+            "resolutions": resolutions
         })
 
     except Exception as e:
@@ -135,7 +122,6 @@ def resolutions():
             "success": False,
             "error": str(e)
         })
-
 
 @app.route("/api/download", methods=["POST"])
 def download():
