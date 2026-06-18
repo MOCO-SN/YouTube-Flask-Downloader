@@ -83,32 +83,36 @@ def video_info():
             "error": str(e)
         })
 
-
-@app.route("/api/resolutions", methods=["GET", "POST"])
+@app.route("/api/resolutions", methods=["POST"])
 def resolutions():
 
     try:
 
-        print("FORM =", request.form)
-        print("JSON =", request.get_json(silent=True))
+        print("FORM DATA =", request.form)
 
         url = request.form.get("url")
+
+        print("URL =", url)
+
+        if not url:
+            return jsonify({
+                "success": False,
+                "error": "URL not received"
+            })
 
         yt = YouTube(url)
 
         resolutions = []
 
-        for stream in yt.streams.filter(
-                file_extension="mp4"):
+        for stream in yt.streams:
 
             if stream.resolution:
-                resolutions.append(
-                    stream.resolution
-                )
+                resolutions.append(stream.resolution)
 
-        resolutions = sorted(
-            list(set(resolutions)),
-            key=lambda x: int(x[:-1]),
+        resolutions = list(set(resolutions))
+
+        resolutions.sort(
+            key=lambda x: int(x.replace("p", "")),
             reverse=True
         )
 
@@ -120,6 +124,8 @@ def resolutions():
         })
 
     except Exception as e:
+
+        print("ERROR =", str(e))
 
         return jsonify({
             "success": False,
