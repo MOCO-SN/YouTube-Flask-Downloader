@@ -66,7 +66,11 @@ def video_info():
                 "error": "URL Required"
             })
 
-        yt = YouTube(url)
+        yt = YouTube(
+    url,
+    use_oauth=False,
+    allow_oauth_cache=False
+)
 
         return jsonify({
             "success": True,
