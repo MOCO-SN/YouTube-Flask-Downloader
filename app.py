@@ -84,7 +84,7 @@ def video_info():
         })
 
 
-@app.route("/api/resolutions", methods=["POST"])
+@app.route("/api/resolutions", methods=["GET", "POST"])
 def resolutions():
 
     try:
