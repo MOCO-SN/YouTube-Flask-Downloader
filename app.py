@@ -131,15 +131,13 @@ def resolutions():
             "success": False,
             "error": str(e)
         })
-
 @app.route("/api/download", methods=["POST"])
 def download():
 
     try:
 
         url = request.form.get("url")
-        file_type = request.form.get("file_type", "mp4")
-        resolution = request.form.get("resolution", "highest")
+        file_type = request.form.get("file_type")
 
         if not url:
             return jsonify({
@@ -149,90 +147,24 @@ def download():
 
         yt = YouTube(url)
 
-        title = safe_filename(yt.title)
+        if file_type == "mp3":
 
-        # MP3
-        if file_type.lower() == "mp3":
-
-            audio_stream = (
+            stream = (
                 yt.streams
                 .filter(only_audio=True)
-                .order_by("abr")
-                .desc()
                 .first()
             )
 
-            if not audio_stream:
-                return jsonify({
-                    "success": False,
-                    "error": "Audio stream unavailable"
-                })
-
-            temp_file = audio_stream.download(
+            filename = stream.download(
                 output_path=DOWNLOAD_FOLDER
             )
 
-            final_file = os.path.join(
-                DOWNLOAD_FOLDER,
-                f"{title}.mp3"
-            )
+        else:
 
-            if os.path.exists(final_file):
-                os.remove(final_file)
-
-            os.rename(temp_file, final_file)
-
-            schedule_delete(final_file)
-
-            return jsonify({
-                "success": True,
-                "filename": os.path.basename(final_file),
-                "download_url":
-                    request.host_url +
-                    "downloads/" +
-                    os.path.basename(final_file)
-            })
-
-        # MP4
-
-        progressive_stream = None
-
-        if resolution != "highest":
-
-            progressive_stream = (
+            stream = (
                 yt.streams
                 .filter(
                     progressive=True,
-                    file_extension="mp4",
-                    res=resolution
-                )
-                .first()
-            )
-
-        if progressive_stream:
-
-            file_path = progressive_stream.download(
-                output_path=DOWNLOAD_FOLDER,
-                filename=f"{title}.mp4"
-            )
-
-            schedule_delete(file_path)
-
-            return jsonify({
-                "success": True,
-                "filename": os.path.basename(file_path),
-                "download_url":
-                    request.host_url +
-                    "downloads/" +
-                    os.path.basename(file_path)
-            })
-
-        if resolution == "highest":
-
-            video_stream = (
-                yt.streams
-                .filter(
-                    only_video=True,
                     file_extension="mp4"
                 )
                 .order_by("resolution")
@@ -240,92 +172,17 @@ def download():
                 .first()
             )
 
-        else:
-
-            video_stream = (
-                yt.streams
-                .filter(
-                    only_video=True,
-                    file_extension="mp4",
-                    res=resolution
-                )
-                .first()
+            filename = stream.download(
+                output_path=DOWNLOAD_FOLDER
             )
-
-        audio_stream = (
-            yt.streams
-            .filter(only_audio=True)
-            .order_by("abr")
-            .desc()
-            .first()
-        )
-
-        if not video_stream:
-            return jsonify({
-                "success": False,
-                "error": "Video stream unavailable"
-            })
-
-        if not audio_stream:
-            return jsonify({
-                "success": False,
-                "error": "Audio stream unavailable"
-            })
-
-        video_file = video_stream.download(
-            output_path=DOWNLOAD_FOLDER,
-            filename_prefix="video_"
-        )
-
-        audio_file = audio_stream.download(
-            output_path=DOWNLOAD_FOLDER,
-            filename_prefix="audio_"
-        )
-
-        final_file = os.path.join(
-            DOWNLOAD_FOLDER,
-            f"{title}.mp4"
-        )
-
-        cmd = [
-            FFMPEG_PATH,
-            "-i", video_file,
-            "-i", audio_file,
-            "-c:v", "copy",
-            "-c:a", "aac",
-            "-shortest",
-            final_file,
-            "-y"
-        ]
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True
-        )
-
-        if result.returncode != 0:
-
-            return jsonify({
-                "success": False,
-                "error": result.stderr
-            })
-
-        if os.path.exists(video_file):
-            os.remove(video_file)
-
-        if os.path.exists(audio_file):
-            os.remove(audio_file)
-
-        schedule_delete(final_file)
 
         return jsonify({
             "success": True,
-            "filename": os.path.basename(final_file),
+            "filename": os.path.basename(filename),
             "download_url":
                 request.host_url +
                 "downloads/" +
-                os.path.basename(final_file)
+                os.path.basename(filename)
         })
 
     except Exception as e:
