@@ -46,7 +46,7 @@ def index():
 
         try:
 
-            yt = YouTube(url)
+            yt = YouTube(url, use_po_token=True)
 
             title = safe_filename(yt.title)
 

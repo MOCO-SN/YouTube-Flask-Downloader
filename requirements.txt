@@ -2,3 +2,4 @@ Flask
 pytubefix
 imageio-ffmpeg
 gunicorn
+nodejs-wheel-binaries
