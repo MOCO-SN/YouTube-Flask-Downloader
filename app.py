@@ -47,10 +47,10 @@ def index():
         try:
 
             ydl_opts = {
-    "quiet": True,
-    "no_warnings": True,
-    "ignoreerrors": True
-}
+            "quiet": True,
+            "no_warnings": True,
+            "ignoreerrors": True
+            }
 
             yt = YouTube(url, use_po_token=True)
 
